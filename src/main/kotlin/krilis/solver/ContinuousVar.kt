@@ -6,9 +6,11 @@ class ContinuousVar(
     val upperBound: Double? = null
 ) : ProgramElement {
 
+    fun toLinearExpr() = LinearExpr(mapOf(this.name to SimpleTerm(1.0, this)), constantSum = 0.0)
+
     override operator fun plus(other: ContinuousVar) = LinearExpr(
             mapOf(this.name to SimpleTerm(1.0, this), other.name to SimpleTerm(1.0, other)),
-            0.0
+            constantSum = 0.0
         )
 
     override operator fun plus(other: LinearExpr): LinearExpr = other + this
@@ -21,9 +23,13 @@ class ContinuousVar(
         return LinearExpr(mapOf(this.name to SimpleTerm(1.0, this)), -other)
     }
 
+    override operator fun times(other: Double): LinearExpr {
+        return LinearExpr(mapOf(this.name to SimpleTerm(other, this)), constantSum = 0.0)
+    }
+
     override operator fun minus(other: ContinuousVar): LinearExpr = LinearExpr(
         mapOf(this.name to SimpleTerm(1.0, this), other.name to SimpleTerm(-1.0, other)),
-        0.0
+        constantSum = 0.0
     )
 
     override operator fun minus(other: LinearExpr): LinearExpr {
@@ -37,3 +43,4 @@ class ContinuousVar(
 
 operator fun Double.plus(other: ContinuousVar) = other + this
 operator fun Double.minus(other: ContinuousVar) = other - this
+operator fun Double.times(other: ContinuousVar) = other * this

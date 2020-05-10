@@ -8,20 +8,19 @@ interface ProgramElement {
     operator fun minus(other: LinearExpr): ProgramElement
     operator fun minus(other: Double): ProgramElement
     operator fun unaryMinus(): ProgramElement
+    operator fun times(other: Double): ProgramElement
 }
 
 data class SimpleTerm(val coeff: Double, val variable: ContinuousVar)
 
 data class LinearExpr(
-    val expressionVars: Map<String, SimpleTerm>,
-    val constantSum: Double = 0.0
+        val expressionVarTerms: Map<String, SimpleTerm>,
+        val constantSum: Double = 0.0
 ) : ProgramElement {
-    val size: Int
-        get() = expressionVars.size
 
     override operator fun plus(other: ContinuousVar): LinearExpr {
-        val newMap = HashMap<String, SimpleTerm>(this.expressionVars)
-        val existing: SimpleTerm? = this.expressionVars[other.name]
+        val newMap = HashMap<String, SimpleTerm>(this.expressionVarTerms)
+        val existing: SimpleTerm? = this.expressionVarTerms[other.name]
         if (existing != null) {
             val newCoeff: Double = existing.coeff + 1.0
             newMap[other.name] = SimpleTerm(newCoeff, other)
@@ -32,23 +31,26 @@ data class LinearExpr(
     }
 
     override operator fun plus(other: LinearExpr): LinearExpr {
-        val newMap = HashMap<String, SimpleTerm>(this.expressionVars)
-        for (key in other.expressionVars.keys) {
-            val ourLookup: SimpleTerm? = this.expressionVars[key]
+        val newMap = HashMap<String, SimpleTerm>(this.expressionVarTerms)
+        newMap.putAll(this.expressionVarTerms)
+        for ((key, term) in other.expressionVarTerms.entries) {
+            val ourLookup: SimpleTerm? = newMap[key]
             if (ourLookup != null) {
-                val theirLookup: SimpleTerm = other.expressionVars[key]!!
                 newMap[key] = SimpleTerm(
-                    ourLookup.coeff + theirLookup.coeff,
+                    ourLookup.coeff + term.coeff,
                     ourLookup.variable
                 )
+            } else {
+                newMap[key] = term
             }
         }
+
         return LinearExpr(newMap.toMap(), this.constantSum + other.constantSum)
     }
 
     override operator fun plus(other: Double): LinearExpr = LinearExpr(
-        this.expressionVars,
-        this.constantSum + other
+        expressionVarTerms = this.expressionVarTerms,
+        constantSum = this.constantSum + other
     )
 
     override operator fun minus(other: ContinuousVar): LinearExpr = this + (-other)
@@ -56,17 +58,24 @@ data class LinearExpr(
     override operator fun minus(other: Double): LinearExpr = this + (-other)
 
     override operator fun unaryMinus(): LinearExpr = LinearExpr(
-        expressionVars = this.expressionVars.mapValues { entry ->
+        expressionVarTerms = this.expressionVarTerms.mapValues { entry ->
             SimpleTerm(-entry.value.coeff, entry.value.variable)
         },
         constantSum = -this.constantSum
+    )
+
+    override operator fun times(other: Double): LinearExpr = LinearExpr(
+            expressionVarTerms = this.expressionVarTerms.mapValues { entry ->
+                SimpleTerm(other * entry.value.coeff, entry.value.variable)
+            },
+            constantSum = other * this.constantSum
     )
 
 
     override fun toString(): String {
         var fillerString = ""
         var isFirstItem = true
-        for (varTerm in this.expressionVars.values) {
+        for (varTerm in this.expressionVarTerms.values) {
             if (isFirstItem) {
                 isFirstItem = false
             } else {

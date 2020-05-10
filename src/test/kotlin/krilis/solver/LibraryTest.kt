@@ -3,12 +3,15 @@
  */
 package krilis.solver
 
+import krilis.solver.utils.withinAbsTolerance
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 
 
 class LibraryTest {
+
     @Test fun testSomeLibraryMethod() {
         val classUnderTest = Library()
         assertTrue(classUnderTest.someLibraryMethod(), "someLibraryMethod should return 'true'")
@@ -20,41 +23,113 @@ class LibraryTest {
         val expr1: LinearExpr = x + y
         val expr2: LinearExpr = y + x
         val expr3: LinearExpr = expr1 + expr2
-        assertEquals(expr1.expressionVars["x"]?.coeff, 1.0)
-        assertEquals(expr2.expressionVars["y"]?.coeff, 1.0)
-        assertEquals(expr3.expressionVars["x"]?.coeff, 2.0)
-        assertEquals(expr3.expressionVars["y"]?.coeff, 2.0)
-        assertEquals(expr1.constantSum, 0.0)
-        assertEquals(expr2.constantSum, 0.0)
-        assertEquals(expr3.constantSum, 0.0)
+        assertEquals(1.0, expr1.expressionVarTerms["x"]?.coeff)
+        assertEquals(1.0, expr2.expressionVarTerms["y"]?.coeff)
+        assertEquals(2.0, expr3.expressionVarTerms["x"]?.coeff)
+        assertEquals(2.0, expr3.expressionVarTerms["y"]?.coeff)
+        assertEquals(0.0, expr1.constantSum)
+        assertEquals(0.0, expr2.constantSum)
+        assertEquals(0.0, expr3.constantSum)
     }
 
     @Test fun testAddConstantsInExpressions() {
         val x = ContinuousVar("x")
         val expr1: LinearExpr = x + 4.0
-        assertEquals(expr1.constantSum, 4.0)
+        assertEquals(4.0, expr1.constantSum)
         val expr2: LinearExpr = x + 6.0
-        assertEquals((expr2 + expr1).constantSum, 10.0)
+        assertEquals(10.0, (expr2 + expr1).constantSum)
+    }
+
+    @Test fun testSubtractingVars() {
+        val a = ContinuousVar("a")
+        val b = ContinuousVar("b")
+        val aMinusB: LinearExpr = a - b
+        assertEquals(0.0, aMinusB.constantSum)
+        assertEquals(1.0, aMinusB.expressionVarTerms["a"]?.coeff)
+        assertEquals(-1.0, aMinusB.expressionVarTerms["b"]?.coeff)
     }
 
     @Test fun testSubtractingExpressions() {
         val a = ContinuousVar("a")
         val b = ContinuousVar("b")
-        val aMinusB: LinearExpr = a - b
-        assertEquals(aMinusB.constantSum, 0.0)
-        assertEquals(aMinusB.expressionVars["a"]?.coeff, 1.0)
-        assertEquals(aMinusB.expressionVars["b"]?.coeff, -1.0)
+        val expr1: LinearExpr = 2.0*a + 3.0*b + 2.0
+        val expr2: LinearExpr = 1.0*a + 4.0*b + 3.0
+        val expr3: LinearExpr = expr1 - expr2
+        assertEquals(-1.0, expr3.constantSum)
+        assertEquals(1.0, expr3.expressionVarTerms["a"]?.coeff)
+        assertEquals(-1.0, expr3.expressionVarTerms["b"]?.coeff)
     }
 
     @Test fun testVarsAddingConstants() {
         val a = ContinuousVar("a")
         val aPlusConst1: LinearExpr = a + 42.0
-        assertEquals(aPlusConst1.constantSum, 42.0)
+        assertEquals(42.0, aPlusConst1.constantSum)
         val aPlusConst2: LinearExpr = 69.0 + a
-        assertEquals(aPlusConst2.constantSum, 69.0)
-        val constPlusA1: LinearExpr = a + 42.0
-        assertEquals(constPlusA1.constantSum, 42.0)
-        val constPlusA2: LinearExpr = 69.0 + a
-        assertEquals(constPlusA2.constantSum, 69.0)
+        assertEquals(69.0, aPlusConst2.constantSum)
+        val constPlusA1: LinearExpr = aPlusConst1 + 42.0
+        assertEquals(84.0, constPlusA1.constantSum)
+    }
+
+    @Test fun testVarCoefficientAdding() {
+        val a = ContinuousVar("a")
+        val b = ContinuousVar("b")
+        val expr: LinearExpr = 4.0*a + 5.0*b + 10.0
+        assertEquals(10.0, expr.constantSum)
+        assertEquals(4.0, expr.expressionVarTerms["a"]?.coeff)
+        assertEquals(5.0, expr.expressionVarTerms["b"]?.coeff)
+        val expr2: LinearExpr = 7.0*a + 2.0*b + expr
+        assertEquals(10.0, expr2.constantSum)
+        assertEquals(11.0, expr2.expressionVarTerms["a"]?.coeff)
+        assertEquals(7.0, expr2.expressionVarTerms["b"]?.coeff)
+        val expr3: LinearExpr = expr2 - expr
+        assertEquals(0.0, expr3.constantSum)
+        assertEquals(7.0, expr3.expressionVarTerms["a"]?.coeff)
+        assertEquals(2.0, expr3.expressionVarTerms["b"]?.coeff)
+    }
+
+    @Test fun invertLteConstraint() {
+        val cons = LteConstraint(ContinuousVar("x") + 2.0 * ContinuousVar("y") + 10.0, 0.0)
+        val invCons: GteConstraint = cons.negate()
+        assertEquals(-10.0, invCons.lhs.constantSum)
+    }
+
+    @Test fun invertGteConstraint() {
+        val cons = GteConstraint(ContinuousVar("x") + 2.0 * ContinuousVar("y") + 10.0, 0.0)
+        val invCons: LteConstraint = cons.negate()
+        assertEquals(-10.0, invCons.lhs.constantSum)
+    }
+
+    @Test fun buildLinearProgram() {
+        val x = ContinuousVar("x")
+        val y = ContinuousVar("y")
+        val z = ContinuousVar("z")
+        val simpleConstraint = EqConstraint(x, y)
+        val complicatedConstraint = LteConstraint(5.0 * x + 10.0 - z, 0.0)
+        val constraints = arrayListOf(simpleConstraint, complicatedConstraint)
+        val solver = LpSolver(x.toLinearExpr(), constraints)
+    }
+
+    @Test fun richlandLinearProgram() {
+        val x1 = ContinuousVar("x1")
+        val x2 = ContinuousVar("x2")
+        val p = 40.0*x1 + 30.0*x2
+        val solver = LpSolver(
+                p,
+                arrayListOf(
+                        LteConstraint(x1 + 2.0*x2, 16.0),
+                        LteConstraint(x1 + x2, 9.0),
+                        LteConstraint(3.0*x1 + 2.0*x2, 24.0),
+                        GteConstraint(x1.toLinearExpr(), 0.0),
+                        GteConstraint(x2.toLinearExpr(), 0.0)
+                )
+        )
+        val solution: ProblemSolution = solver.simplexSolve()
+        if (solution is InfeasibleSolution) {
+            assertFails("Solver found no solution, but LP actually does") {}
+        } else if (solution is FeasibleSolution) {
+            assertTrue(withinAbsTolerance(solution.valueOf(x1), 6.0))
+            assertTrue(withinAbsTolerance(solution.valueOf(x2), 3.0))
+            assertTrue(withinAbsTolerance(solution.optimizationFunctionValue, 330.0))
+        }
     }
 }

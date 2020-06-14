@@ -1,5 +1,6 @@
 # KeLPie: The Human Linear Program Library
 
+
 Usage in 5 minutes:
 
 ```kotlin
@@ -25,3 +26,11 @@ if (solution is FeasibleSolution) {
     // Prints "6.0"
 }
 ```
+
+---
+
+## FAQ
+
+### Q: What does KeLPie stand for?
+
+A: **K**otlin ~~e~~ **L**inear **P**rogram **i**nterfac**e**.

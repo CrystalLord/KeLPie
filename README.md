@@ -3,7 +3,7 @@
 KeLPie is a Kotlin linear program library which allows you to create complicated,
 functional, non-canonical linear programs with ease.
 
-Usage in 5 minutes:
+Usage in 19 lines of code:
 
 ```kotlin
 // Example problem from Professor James Jones at Richland University
@@ -14,9 +14,8 @@ import krilis.solver.*
 fun main() {
     val x1 = ContinuousVar("x1")
     val x2 = ContinuousVar("x2")
-    val p = 40.0*x1 + 30.0*x2
     val solution = LpSolver(
-            maximize = p,
+            maximize = 40.0*x1 + 30.0*x2,
             subjectTo = arrayListOf(
                     LteConstraint(x1 + 2.0*x2, 16.0),
                     LteConstraint(x1 + x2, 9.0),

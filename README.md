@@ -25,7 +25,7 @@ fun main() {
                     GteConstraint(x2.toLinearExpr(), 0.0)
             )
     ).simplexSolve()
-    if (solution is FeasibleSolution) {
+    if (solution is OptimalSolution) {
         println(solution.getValue(x1))
         // Prints "6.0"
     }

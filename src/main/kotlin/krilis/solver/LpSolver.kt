@@ -9,6 +9,7 @@ enum class PivotCellResultType {
     VALUE,
     COMPLETE,
     INFEASIBLE,
+    UNBOUNDED,
 }
 data class PivotCellResult(val type: PivotCellResultType, val rowIdx: Int, val colIdx: Int)
 
@@ -44,12 +45,13 @@ class LpSolver(val maximize: LinearExpr, val subjectTo: Collection<LinearConstra
         while (true) {
             when (pivotCell.type) {
                 PivotCellResultType.COMPLETE -> {
-                    return FeasibleSolution(
+                    return OptimalSolution(
                             this.createVariableMapping(tableau),
                             this.getOptimizationValue(tableau)
                     )
                 }
                 PivotCellResultType.INFEASIBLE -> return InfeasibleSolution
+                PivotCellResultType.UNBOUNDED -> return UnboundedSolution
                 PivotCellResultType.VALUE -> {
                     this.pivot(tableau, pivotCell)
                     pivotCell = this.getPivotCellIndices(tableau)
@@ -59,7 +61,7 @@ class LpSolver(val maximize: LinearExpr, val subjectTo: Collection<LinearConstra
     }
 
     /**
-     * Produces a Cononical Tableau from the linear program.
+     * Produces a Canonical Tableau from the linear program.
      *
      * See Also: https://people.richland.edu/james/ictcm/2006/simplex.html
      */

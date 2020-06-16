@@ -85,10 +85,8 @@ val lteConstraint = LteConstraint(x1, x2)
 These work just the same with `LinearExpr`s and `Double`s as arguments.
 
 ```kotlin
-val expr = x1 + x2
-
 // Let x1 + x2 = 0
-val equalityConstraint = EqConstraint(expr, 0.0)
+val equalityConstraint = EqConstraint(x1 + x2, 0.0)
 ```
 
 ## Linear Programs
@@ -126,5 +124,5 @@ There are three different kinds of solution types:
 These are respectively represented with the following `ProgramSolution` subtypes:
 
 1. `InfeasibleSolution`
-2. TODO
-3. `FeasibleSolution`
+2. `UnboundedSolution`
+3. `OptimalSolution`

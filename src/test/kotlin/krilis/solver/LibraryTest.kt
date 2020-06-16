@@ -126,10 +126,10 @@ class LibraryTest {
         val solution: ProblemSolution = solver.simplexSolve()
         if (solution is InfeasibleSolution) {
             assertFails("Solver found no solution, but LP actually does") {}
-        } else if (solution is FeasibleSolution) {
+        } else if (solution is OptimalSolution) {
             assertTrue(withinAbsTolerance(solution.valueOf(x1), 6.0))
             assertTrue(withinAbsTolerance(solution.valueOf(x2), 3.0))
-            assertTrue(withinAbsTolerance(solution.optimizationFunctionValue, 330.0))
+            assertTrue(withinAbsTolerance(solution.optimizationValue, 330.0))
         }
     }
 }

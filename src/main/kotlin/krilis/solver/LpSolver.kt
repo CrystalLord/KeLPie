@@ -3,13 +3,13 @@ package krilis.solver
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-import krilis.solver.utils.DEFAULT_ABS_TOLERANCE
 import krilis.solver.utils.withinAbsTolerance
 
 enum class PivotCellResultType {
     VALUE,
     COMPLETE,
     INFEASIBLE,
+    UNBOUNDED,
 }
 data class PivotCellResult(val type: PivotCellResultType, val rowIdx: Int, val colIdx: Int)
 
@@ -27,7 +27,7 @@ private fun printMatrix(matrix: Array<DoubleArray>) {
     }
 }
 
-class LpSolver(val optimise: LinearExpr, val subjectTo: Collection<LinearConstraint>) {
+class LpSolver(val maximize: LinearExpr, val subjectTo: Collection<LinearConstraint>) {
     private val lpVarNames: ArrayList<String> = arrayListOf()
 
     init {
@@ -35,7 +35,7 @@ class LpSolver(val optimise: LinearExpr, val subjectTo: Collection<LinearConstra
         for (cons in this.subjectTo) {
             varNameSet.addAll(cons.lhs.expressionVarTerms.keys)
         }
-        varNameSet.addAll(optimise.expressionVarTerms.keys)
+        varNameSet.addAll(maximize.expressionVarTerms.keys)
         this.lpVarNames.addAll(varNameSet)
     }
 
@@ -45,12 +45,13 @@ class LpSolver(val optimise: LinearExpr, val subjectTo: Collection<LinearConstra
         while (true) {
             when (pivotCell.type) {
                 PivotCellResultType.COMPLETE -> {
-                    return FeasibleSolution(
+                    return OptimalSolution(
                             this.createVariableMapping(tableau),
                             this.getOptimizationValue(tableau)
                     )
                 }
                 PivotCellResultType.INFEASIBLE -> return InfeasibleSolution
+                PivotCellResultType.UNBOUNDED -> return UnboundedSolution
                 PivotCellResultType.VALUE -> {
                     this.pivot(tableau, pivotCell)
                     pivotCell = this.getPivotCellIndices(tableau)
@@ -60,7 +61,7 @@ class LpSolver(val optimise: LinearExpr, val subjectTo: Collection<LinearConstra
     }
 
     /**
-     * Produces a Cononical Tableau from the linear program.
+     * Produces a Canonical Tableau from the linear program.
      *
      * See Also: https://people.richland.edu/james/ictcm/2006/simplex.html
      */
@@ -101,7 +102,7 @@ class LpSolver(val optimise: LinearExpr, val subjectTo: Collection<LinearConstra
         }
         val lastRow = numRows - 1
         for ((c: Int, varName: String) in this.lpVarNames.withIndex()) {
-            val coeff: Double = -(this.optimise.expressionVarTerms[varName]?.coeff ?: 0.0)
+            val coeff: Double = -(this.maximize.expressionVarTerms[varName]?.coeff ?: 0.0)
             entries[lastRow][2 * c] = coeff
             entries[lastRow][2 * c + 1] = -coeff
         }

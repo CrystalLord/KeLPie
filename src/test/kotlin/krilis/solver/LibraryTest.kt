@@ -106,7 +106,7 @@ class LibraryTest {
         val simpleConstraint = EqConstraint(x, y)
         val complicatedConstraint = LteConstraint(5.0 * x + 10.0 - z, 0.0)
         val constraints = arrayListOf(simpleConstraint, complicatedConstraint)
-        val solver = LpSolver(x.toLinearExpr(), constraints)
+        LpSolver(x.toLinearExpr(), constraints)
     }
 
     @Test fun richlandLinearProgram() {
@@ -126,10 +126,10 @@ class LibraryTest {
         val solution: ProblemSolution = solver.simplexSolve()
         if (solution is InfeasibleSolution) {
             assertFails("Solver found no solution, but LP actually does") {}
-        } else if (solution is FeasibleSolution) {
+        } else if (solution is OptimalSolution) {
             assertTrue(withinAbsTolerance(solution.valueOf(x1), 6.0))
             assertTrue(withinAbsTolerance(solution.valueOf(x2), 3.0))
-            assertTrue(withinAbsTolerance(solution.optimizationFunctionValue, 330.0))
+            assertTrue(withinAbsTolerance(solution.objectiveValue, 330.0))
         }
     }
 }

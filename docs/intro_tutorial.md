@@ -24,7 +24,16 @@ in any non-canonical form.
 
 The heart of the Linear Program in KeLPie is the `LpSolver` class. The `LpSolver` takes in a linear expression
 $\mathbf{c}^T\mathbf{x}$ which it will attempt to maximise, and a set of linear constraints which make each row of the
-resulting matrix equation $\mathbf{Ax} \leq \mathbf{b}$.
+resulting matrix equation $\mathbf{Ax} \leq \mathbf{b}$. This looks something like:
+
+```kotlin
+val solver = LpSolver(
+    maximize = thingIWantMaximized,
+    subjectTo = arrayListOf<LinearConstraint>(
+        /* ... Some linear constraints here ... */
+    )
+)
+```
 
 However, to make an LpSolver instance, we have to define some variables first for the $\mathbf{x}$ vector.
 We can do so with `ContinuousVar`:
@@ -171,7 +180,7 @@ val solution: ProblemSolution = lp.simplexSolve()
 when (solution) {
     is OptimalSolution -> {
         println("Optimal solution found!")
-        prinln("Objective function had value: ${solution.objectiveValue}")
+        println("Objective function had value: ${solution.objectiveValue}")
         println("And variable x1 had value: ${solution.valueOf("x1")}")
     }
     is InfeasibleSolution -> println("No solution found, problem is infeasible.")

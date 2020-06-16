@@ -129,7 +129,7 @@ class LibraryTest {
         } else if (solution is OptimalSolution) {
             assertTrue(withinAbsTolerance(solution.valueOf(x1), 6.0))
             assertTrue(withinAbsTolerance(solution.valueOf(x2), 3.0))
-            assertTrue(withinAbsTolerance(solution.optimizationValue, 330.0))
+            assertTrue(withinAbsTolerance(solution.objectiveValue, 330.0))
         }
     }
 }

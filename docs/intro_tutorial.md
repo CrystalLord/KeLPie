@@ -17,8 +17,8 @@ expressed in the following canonical form:
 
 ![Wikipedia Linear Program](https://wikimedia.org/api/rest_v1/media/math/render/svg/639c4281a57140db9a4416ca58f9d9af14243bb0)
 
-Not all Linear Programs are easiest written in this form, and so KeLPie allows you to define and solve any form of
-Linear Program easily.
+Not all Linear Programs are easily written in this form, and so KeLPie allows you to define and solve Linear Programs
+in any non-canonical form.
 
 ## 2. Variables
 
